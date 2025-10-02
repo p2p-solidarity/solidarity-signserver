@@ -6,10 +6,10 @@ import { api } from "./routes/index";
 
 // Types for Cloudflare bindings
 interface CloudflareBindings {
-  ENS_CONTRACT_ADDRESS: string;
-  GROUP_CONTRACT_ADDRESS: string;
-  SHOUTOUT_KV: KVNamespace;
-  SHOUTOUT_DO: DurableObjectNamespace;
+  // PassKit certificate secrets (base64 encoded PEM files)
+  PASS_CERT: string;
+  PASS_KEY: string;
+  WWDR_CERT: string;
 }
 
 const openapi_documentation_route = "/openapi.json";
@@ -18,8 +18,8 @@ const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>().doc(openapi_docu
   openapi: "3.1.0",
   info: {
     version: "1.0.0",
-    title: "AirMeishi API",
-    description: "Blockchain-based group messaging API with zero-knowledge proofs",
+    title: "PassKit Signing API",
+    description: "Serverless Apple Wallet Pass signing service using PKCS#7",
   },
 });
 
@@ -32,7 +32,7 @@ app
     maxAge: 600,
     credentials: true,
   }))
-  .get("/docs", swaggerUI({ url: openapi_documentation_route }))
+  // .get("/docs", swaggerUI({ url: openapi_documentation_route }))
   .use(prettyJSON())
   .route("/", api);
 

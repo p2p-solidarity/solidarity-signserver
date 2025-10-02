@@ -149,4 +149,17 @@ build
 # Cloudflare
 .wrangler
 wrangler.jsonc
+
+# PassKit Certificates (SENSITIVE - DO NOT COMMIT)
+Certificates/*.p12
+Certificates/*.pem
+Certificates/*.cer
+Certificates/*.key
+*.p12
+*.pem
+*.key
+
+# Local development secrets
+.dev.vars
+
 # End of https://www.toptal.com/developers/gitignore/api/node
