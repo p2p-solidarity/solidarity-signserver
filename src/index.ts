@@ -3,6 +3,7 @@ import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 import { swaggerUI } from "@hono/swagger-ui";
 import { api } from "./routes/index";
+import { rateLimitMiddleware } from "./middleware/rate-limit";
 
 // Types for Cloudflare bindings
 interface CloudflareBindings {
@@ -10,6 +11,10 @@ interface CloudflareBindings {
   PASS_CERT: string;
   PASS_KEY: string;
   WWDR_CERT: string;
+  // Rate limiter binding
+  RATE_LIMITER: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
 }
 
 const openapi_documentation_route = "/openapi.json";
@@ -32,6 +37,7 @@ app
     maxAge: 600,
     credentials: true,
   }))
+  .use("*", rateLimitMiddleware)
   // .get("/docs", swaggerUI({ url: openapi_documentation_route }))
   .use(prettyJSON())
   .route("/", api);
