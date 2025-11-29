@@ -1,21 +1,12 @@
+import type { ExportedHandlerScheduledHandler } from "@cloudflare/workers-types";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 import { swaggerUI } from "@hono/swagger-ui";
 import { api } from "./routes/index";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
-
-// Types for Cloudflare bindings
-interface CloudflareBindings {
-  // PassKit certificate secrets (base64 encoded PEM files)
-  PASS_CERT: string;
-  PASS_KEY: string;
-  WWDR_CERT: string;
-  // Rate limiter binding
-  RATE_LIMITER: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-}
+import type { CloudflareBindings } from "./types/bindings";
+import { createInboxDb, purgeExpiredMessages } from "./routes/inbox/repository";
 
 const openapi_documentation_route = "/openapi.json";
 
@@ -44,4 +35,17 @@ app
 
 
 export default app;
+
+export const scheduled: ExportedHandlerScheduledHandler<CloudflareBindings> = async (event, env, ctx) => {
+  ctx.waitUntil(runInboxCleanup(env));
+};
+
+async function runInboxCleanup(env: CloudflareBindings) {
+  const db = createInboxDb(env.INBOX_DB);
+  const cutoffSeconds = Math.floor(Date.now() / 1000) - 60 * 60 * 24;
+  const removed = await purgeExpiredMessages(db, cutoffSeconds);
+  console.log(`🧹 Purged ${removed} expired inbox entries`);
+}
+
+export type { CloudflareBindings } from "./types/bindings";
 

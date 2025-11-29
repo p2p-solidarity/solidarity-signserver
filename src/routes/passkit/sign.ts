@@ -1,5 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import type { CloudflareBindings } from "../../types/bindings";
 // @ts-ignore - node-forge works in Cloudflare Workers
 import forge from "node-forge";
 
