@@ -6,7 +6,7 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { api } from "./routes/index";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import type { CloudflareBindings } from "./types/bindings";
-import { createInboxDb, purgeExpiredMessages } from "./routes/inbox/repository";
+import { createInboxDb, purgeExpiredMessages } from "./lib/inbox/repository";
 
 const openapi_documentation_route = "/openapi.json";
 

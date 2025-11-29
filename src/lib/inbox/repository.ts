@@ -1,5 +1,5 @@
 import type { D1Database, D1Result } from "@cloudflare/workers-types";
-import { asc, eq, inArray, lt } from "drizzle-orm";
+import { and, asc, count, eq, inArray, lt } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { inbox, schema, type InboxRecord, type NewInboxRecord } from "../../db/schema";
 
@@ -17,6 +17,29 @@ export const listInboxMessages = (db: InboxDatabase, ownerPubkey: string): Promi
     .from(inbox)
     .where(eq(inbox.ownerPubkey, ownerPubkey))
     .orderBy(asc(inbox.createdAt));
+
+export const getMessageCountForOwner = async (db: InboxDatabase, ownerPubkey: string): Promise<number> => {
+  const result = await db
+    .select({ count: count() })
+    .from(inbox)
+    .where(eq(inbox.ownerPubkey, ownerPubkey));
+  return result[0]?.count ?? 0;
+};
+
+export const verifyMessageOwnership = async (
+  db: InboxDatabase,
+  messageIds: string[],
+  ownerPubkey: string
+): Promise<string[]> => {
+  if (!messageIds.length) {
+    return [];
+  }
+  const ownedMessages = await db
+    .select({ id: inbox.id })
+    .from(inbox)
+    .where(and(inArray(inbox.id, messageIds), eq(inbox.ownerPubkey, ownerPubkey)));
+  return ownedMessages.map((m) => m.id);
+};
 
 export const deleteInboxMessages = async (db: InboxDatabase, ids: string[]): Promise<number> => {
   if (!ids.length) {
