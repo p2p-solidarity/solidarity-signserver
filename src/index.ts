@@ -2,12 +2,11 @@ import type { ExportedHandlerScheduledHandler } from "@cloudflare/workers-types"
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
-import { swaggerUI } from "@hono/swagger-ui";
+// import { swaggerUI } from "@hono/swagger-ui";
 import { api } from "./routes/index";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import type { CloudflareBindings } from "./types/bindings";
-import { createInboxDb, purgeExpiredMessages } from "./lib/inbox/repository";
-
+import { runInboxCleanup } from "./schedules/index";
 const openapi_documentation_route = "/openapi.json";
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>().doc(openapi_documentation_route, {
@@ -34,17 +33,15 @@ app
   .route("/", api);
 
 
-export default app;
-
-export const scheduled: ExportedHandlerScheduledHandler<CloudflareBindings> = async (event, env, ctx) => {
-  ctx.waitUntil(runInboxCleanup(env));
-};
-
-async function runInboxCleanup(env: CloudflareBindings) {
-  const db = createInboxDb(env.INBOX_DB);
-  const cutoffSeconds = Math.floor(Date.now() / 1000) - 60 * 60 * 24;
-  const removed = await purgeExpiredMessages(db, cutoffSeconds);
-  console.log(`🧹 Purged ${removed} expired inbox entries`);
+export default {
+  fetch: app.fetch,
+  scheduled: async (event: ScheduledEvent, env: CloudflareBindings, ctx: ExecutionContext) => {
+    ctx.waitUntil(
+      runInboxCleanup(env).catch((error) => {
+        console.error("❌ Inbox cleanup failed:", error);
+      })
+    );
+  }
 }
 
 export type { CloudflareBindings } from "./types/bindings";
