@@ -53,4 +53,3 @@ export const AckRequestSchema = z.object({
 export const AckResponseSchema = z.object({
   deleted: z.number().min(0),
 });
-

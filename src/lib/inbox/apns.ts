@@ -79,6 +79,20 @@ export type ApnsResult =
   | { ok: true; status: number }
   | { ok: false; status?: number; body?: string; error: string };
 
+type ApnsPayload = {
+  aps: {
+    alert?: {
+      title?: string;
+      body?: string;
+      subtitle?: string;
+    } | string;
+    "content-available"?: number;
+    sound?: string;
+    badge?: number;
+  };
+  [key: string]: unknown;
+};
+
 export async function sendBackgroundPing(env: CloudflareBindings, deviceToken: string): Promise<ApnsResult> {
   const jwt = await buildApnsJwt(env);
   const host = (env.APNS_HOST || "https://api.push.apple.com").replace(/\/$/, "");
@@ -117,4 +131,48 @@ export async function sendBackgroundPing(env: CloudflareBindings, deviceToken: s
 
   return { ok: true, status: response.status };
 }
+
+export async function sendNotification(
+  env: CloudflareBindings,
+  deviceToken: string,
+  payload: ApnsPayload,
+): Promise<ApnsResult> {
+  const jwt = await buildApnsJwt(env);
+  const host = (env.APNS_HOST || "https://api.push.apple.com").replace(/\/$/, "");
+  const url = `${host}/3/device/${deviceToken}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `bearer ${jwt}`,
+        "Content-Type": "application/json",
+        "apns-topic": env.APNS_TOPIC,
+        "apns-push-type": payload.aps.alert ? "alert" : "background",
+        "apns-priority": payload.aps.alert ? "10" : "5",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to reach APNs",
+    };
+  }
+
+  const responseText = await response.text().catch(() => undefined);
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      body: responseText,
+      error: "apns_request_failed",
+    };
+  }
+
+  return { ok: true, status: response.status };
+}
+
 

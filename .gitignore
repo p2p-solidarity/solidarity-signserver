@@ -162,4 +162,7 @@ Certificates/*.key
 # Local development secrets
 .dev.vars
 
+# macos
+.DS_Store
+
 # End of https://www.toptal.com/developers/gitignore/api/node

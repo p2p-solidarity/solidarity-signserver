@@ -1,7 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { CloudflareBindings } from "../../types/bindings";
-import { sendBackgroundPing } from "../../lib/inbox/apns";
+import { sendNotification } from "../../lib/inbox/apns";
 import { unsealDeviceToken, utf8Encode, verifyOwnerSignature } from "../../lib/inbox/crypto";
 import {
   createInboxDb,
@@ -13,6 +13,9 @@ import {
   SendRequestSchema,
   SendResponseSchema,
 } from "./schemas";
+import type { z } from "zod";
+
+type SendRequest = z.infer<typeof SendRequestSchema>;
 
 export const sendRoute = createRoute({
   method: "post",
@@ -83,7 +86,8 @@ export const sendHandler = async (c: Context<{ Bindings: CloudflareBindings }>) 
     return c.json({ error: "rate_limit_exceeded", detail: "Too many send requests. Please try again later." }, 429);
   }
 
-  const payload = await c.req.valid("json");
+  const rawPayload = await c.req.json();
+  const payload = SendRequestSchema.parse(rawPayload) as SendRequest;
   const db = createInboxDb(c.env.INBOX_DB);
 
   // Optional sender signature verification
@@ -143,10 +147,44 @@ export const sendHandler = async (c: Context<{ Bindings: CloudflareBindings }>) 
     );
   }
 
-  const apnsResult = await sendBackgroundPing(c.env, deviceToken);
+  // Send notification with alert payload
+  const apnsResult = await sendNotification(c.env, deviceToken, {
+    aps: {
+      alert: {
+        title: "New message",
+        body: "You have a new message",
+      },
+      sound: "default",
+      badge: 1,
+    },
+    message_id: messageId,
+  });
 
   if (!apnsResult.ok) {
-    console.warn("APNs delivery failed", apnsResult);
+    // Parse APNs error reason from body if available
+    let apnsReason: string | undefined;
+    if (apnsResult.body) {
+      try {
+        const bodyJson = JSON.parse(apnsResult.body);
+        apnsReason = bodyJson.reason;
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    // Log APNs failure with filtered sensitive data
+    console.warn("APNs delivery failed", {
+      messageId,
+      status: apnsResult.status,
+      reason: apnsReason || apnsResult.error,
+      // Filter out device token - only log prefix for debugging
+      deviceTokenPrefix: deviceToken.slice(0, 8),
+    });
+  } else {
+    console.log("APNs delivery succeeded", {
+      messageId,
+      status: apnsResult.status,
+    });
   }
 
   return c.json(

@@ -29,9 +29,22 @@ function bytesToBinary(bytes: Uint8Array): string {
 }
 
 export function base64ToBytes(value: string): Uint8Array {
-  const normalized = normalizeBase64(value);
-  const binary = atob(normalized);
-  return binaryToBytes(binary);
+  try {
+    // Remove URL encoding if present (e.g., %2B -> +)
+    const decoded = decodeURIComponent(value);
+    const normalized = normalizeBase64(decoded);
+    const binary = atob(normalized);
+    return binaryToBytes(binary);
+  } catch (error) {
+    // If decodeURIComponent fails (e.g., already decoded), try direct normalization
+    try {
+      const normalized = normalizeBase64(value);
+      const binary = atob(normalized);
+      return binaryToBytes(binary);
+    } catch (innerError) {
+      throw new Error(`Invalid base64/base64url string: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 }
 
 export function bytesToBase64(bytes: Uint8Array): string {
@@ -113,13 +126,33 @@ export async function verifyOwnerSignature(pubkeyB64: string, signatureB64: stri
   try {
     const pubkeyBytes = base64ToBytes(pubkeyB64);
     const signatureBytes = base64ToBytes(signatureB64);
+    
+    // Validate Ed25519 key size (32 bytes)
+    if (pubkeyBytes.length !== 32) {
+      console.error(`Invalid pubkey length: expected 32 bytes, got ${pubkeyBytes.length}`);
+      return false;
+    }
+    
+    // Validate Ed25519 signature size (64 bytes)
+    if (signatureBytes.length !== 64) {
+      console.error(`Invalid signature length: expected 64 bytes, got ${signatureBytes.length}`);
+      return false;
+    }
+    
     const key = await crypto.subtle.importKey("raw", pubkeyBytes, { name: "Ed25519" }, false, ["verify"]);
     return crypto.subtle.verify("Ed25519", key, signatureBytes, payload);
   } catch (error) {
-    console.error("Signature verification failed:", error);
+    console.error("Signature verification failed:", {
+      error: error instanceof Error ? error.message : String(error),
+      pubkeyLength: pubkeyB64.length,
+      sigLength: signatureB64.length,
+      pubkeyPreview: pubkeyB64.substring(0, 20) + "...",
+      sigPreview: signatureB64.substring(0, 20) + "...",
+    });
     return false;
   }
 }
 
 export const ownerAuthPayload = (pubkey: string) => utf8Encode(pubkey);
+
 
