@@ -151,8 +151,8 @@ export const sendHandler = async (c: Context<{ Bindings: CloudflareBindings }>) 
   const apnsResult = await sendNotification(c.env, deviceToken, {
     aps: {
       alert: {
-        title: "New message",
-        body: "You have a new message",
+        title: "[Sakura] New message",
+        body: "You have a new sakura message",
       },
       sound: "default",
       badge: 1,

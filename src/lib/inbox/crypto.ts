@@ -3,7 +3,16 @@ const textDecoder = new TextDecoder();
 const aesKeyCache = new Map<string, Promise<CryptoKey>>();
 
 function normalizeBase64(value: string): string {
-  let normalized = value.replace(/[\r\n\s]/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  // Make the input tolerant to common transport mutations:
+  // - '+' turning into space when query params are not URL-encoded
+  // - newline / tab characters inserted by copy-paste
+  let normalized = value
+    .trim()
+    .replace(/ /g, "+")
+    .replace(/[\r\n\t]/g, "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
   const padding = normalized.length % 4;
   if (padding) {
     normalized = normalized.padEnd(normalized.length + (4 - padding), "=");
@@ -29,22 +38,28 @@ function bytesToBinary(bytes: Uint8Array): string {
 }
 
 export function base64ToBytes(value: string): Uint8Array {
+  // Try both decoded and raw forms; accumulate failures for clearer errors
+  const attempts: string[] = [];
+  const candidates: string[] = [];
+
   try {
-    // Remove URL encoding if present (e.g., %2B -> +)
-    const decoded = decodeURIComponent(value);
-    const normalized = normalizeBase64(decoded);
-    const binary = atob(normalized);
-    return binaryToBytes(binary);
+    candidates.push(decodeURIComponent(value));
   } catch (error) {
-    // If decodeURIComponent fails (e.g., already decoded), try direct normalization
+    attempts.push(`decodeURIComponent: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  candidates.push(value);
+
+  for (const candidate of candidates) {
     try {
-      const normalized = normalizeBase64(value);
+      const normalized = normalizeBase64(candidate);
       const binary = atob(normalized);
       return binaryToBytes(binary);
-    } catch (innerError) {
-      throw new Error(`Invalid base64/base64url string: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error) {
+      attempts.push(error instanceof Error ? error.message : String(error));
     }
   }
+
+  throw new Error(`Invalid base64/base64url string: ${attempts.join(" | ")}`);
 }
 
 export function bytesToBase64(bytes: Uint8Array): string {
