@@ -11,21 +11,13 @@
 		"enabled": true,
 		"head_sampling_rate": 1
 	},
-	"routes": [
-		{
-			"pattern": "solidarity.gg/.well-known/nostr.json*",
-			"zone_name": "solidarity.gg"
-		},
-		// The wildcard route starts at /id/; DELETE /id needs its own exact route.
-		{
-			"pattern": "solidarity.gg/id",
-			"zone_name": "solidarity.gg"
-		},
-		{
-			"pattern": "solidarity.gg/id/*",
-			"zone_name": "solidarity.gg"
-		}
-	],
+	// This worker (inbox / PassKit) is reached on its workers.dev hostname — the
+	// app's EXPO_PUBLIC_SAKURA_API_URL. Kept explicit so a deploy never silently
+	// flips it (wrangler defaults it to false when unset). The NIP-05 directory
+	// routes on solidarity.gg live in `wrangler.nip05.jsonc`: that zone belongs
+	// to a different Cloudflare account, and a route can only be attached from
+	// the zone's own account (`bun run deploy:nip05`).
+	"workers_dev": true,
 	"d1_databases": [
 		{
 			"binding": "INBOX_DB",

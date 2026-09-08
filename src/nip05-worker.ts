@@ -1,0 +1,46 @@
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from "hono/cors";
+import { rateLimitMiddleware } from "./middleware/rate-limit";
+import { nip05Router } from "./routes/nip05";
+import { runNip05Cleanup } from "./schedules/index";
+import type { CloudflareBindings } from "./types/bindings";
+
+/**
+ * NIP-05 directory worker — the `solidarity.gg` id service on its own.
+ *
+ * Deployed with `wrangler.nip05.jsonc` into the Cloudflare account that owns
+ * the solidarity.gg zone (a Worker route can only be attached from the
+ * account the zone lives in), separate from the inbox / PassKit worker in
+ * `src/index.ts`, which stays in its own account with its own D1. Same
+ * handlers, same schema (`drizzle/`), only the nip05 router and its audit
+ * cleanup cron are mounted. `bun run deploy:nip05` does the whole thing.
+ */
+const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>();
+
+app
+  .use(
+    "*",
+    cors({
+      origin: "*",
+      allowHeaders: ["Content-Type", "Authorization"],
+      allowMethods: ["POST", "GET", "OPTIONS", "DELETE"],
+      maxAge: 600,
+    }),
+  )
+  .use("*", rateLimitMiddleware)
+  .route("/", nip05Router);
+
+export default {
+  fetch: app.fetch,
+  scheduled: async (
+    _event: ScheduledEvent,
+    env: CloudflareBindings,
+    ctx: ExecutionContext,
+  ) => {
+    ctx.waitUntil(
+      runNip05Cleanup(env).catch((error) => {
+        console.error("❌ NIP-05 cleanup failed:", error);
+      }),
+    );
+  },
+};
