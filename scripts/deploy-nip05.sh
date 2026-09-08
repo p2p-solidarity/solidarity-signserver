@@ -7,39 +7,64 @@
 #   4. deploy the worker onto the solidarity.gg routes,
 #   5. probe the three public endpoints.
 # Needs a `wrangler login` session with access to that account.
+#
+# Every wrangler call carries `-c wrangler.nip05.jsonc`: wrangler takes the
+# account from the config file it is given (CLOUDFLARE_ACCOUNT_ID alone does
+# NOT redirect `d1` commands away from the default wrangler.jsonc), and the
+# inbox / PassKit worker's config points at a different account.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 CONFIG="wrangler.nip05.jsonc"
 DB_NAME="solidarity_id"
-export CLOUDFLARE_ACCOUNT_ID="$(grep -oE '"account_id":\s*"[0-9a-f]+"' "$CONFIG" | grep -oE '[0-9a-f]{32}')"
 UUID_RE='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
-echo "▸ account ${CLOUDFLARE_ACCOUNT_ID}"
+w() {
+  bun x wrangler "$@" -c "$CONFIG"
+}
 
-# 1. D1 — reuse if it exists, otherwise create it.
-db_id="$(bun x wrangler d1 list --json 2>/dev/null \
-  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const rows=JSON.parse(s);const hit=rows.find(r=>r.name===process.argv[1]);process.stdout.write(hit?hit.uuid:"")})' "$DB_NAME")"
+account="$(grep -oE '"account_id":[[:space:]]*"[0-9a-f]{32}"' "$CONFIG" | grep -oE '[0-9a-f]{32}')"
+echo "▸ account ${account} (from ${CONFIG})"
+
+# 1. D1 — reuse if it exists, otherwise create it. The list is fetched with
+#    the nip05 config so it is THAT account's list.
+db_id="$(w d1 list --json 2>/dev/null \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const rows=JSON.parse(s);const hit=rows.find(r=>r.name===process.argv[1]);process.stdout.write(hit?hit.uuid:"")})' "$DB_NAME" \
+  || true)"
 if [ -z "$db_id" ]; then
   echo "▸ creating D1 ${DB_NAME}"
-  db_id="$(bun x wrangler d1 create "$DB_NAME" 2>&1 | grep -oE "$UUID_RE" | head -1)"
-  [ -n "$db_id" ] || { echo "✘ could not read the new database id from wrangler output" >&2; exit 1; }
+  if ! out="$(w d1 create "$DB_NAME" 2>&1)"; then
+    printf '%s\n' "$out" >&2
+    echo "✘ wrangler d1 create failed (raw output above)" >&2
+    exit 1
+  fi
+  printf '%s\n' "$out"
+  db_id="$(printf '%s' "$out" | grep -oE "$UUID_RE" | head -1 || true)"
+  if [ -z "$db_id" ]; then
+    echo "✘ could not read the new database id from the output above" >&2
+    exit 1
+  fi
 fi
 echo "▸ D1 ${DB_NAME} = ${db_id}"
 
 # 2. Pin the id in the config (the placeholder on first run, or a stale id).
 sed -E -i '' "s/(\"database_id\": \")${UUID_RE}(\")/\1${db_id}\2/" "$CONFIG"
-grep -q "\"database_id\": \"${db_id}\"" "$CONFIG" || { echo "✘ failed to write database_id into ${CONFIG}" >&2; exit 1; }
+if ! grep -q "\"database_id\": \"${db_id}\"" "$CONFIG"; then
+  echo "✘ failed to write database_id into ${CONFIG}" >&2
+  exit 1
+fi
 
 # 3. Schema.
-bun x wrangler d1 migrations apply "$DB_NAME" --remote -c "$CONFIG"
+echo "▸ applying migrations"
+w d1 migrations apply "$DB_NAME" --remote
 
 # 4. Worker + routes.
-bun x wrangler deploy --minify -c "$CONFIG"
+echo "▸ deploying solidarity-id"
+w deploy --minify
 
 # 5. Smoke test — every answer must be JSON from the directory, never the
-#    landing page's 404.
+#    landing page's 404 HTML.
 echo "▸ probing solidarity.gg"
 for path in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/history?name=probe'; do
   printf '  %-40s ' "$path"
