@@ -5,14 +5,20 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "skipLibCheck": true,
+    // No "WebWorker": its CacheStorage has no `default`, and it would shadow
+    // the Cloudflare one that does (`caches.default` in lib/nip05/cache.ts).
+    // @cloudflare/workers-types already supplies every Worker global.
     "lib": [
-      "ESNext",
-      "WebWorker"
+      "ESNext"
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "types": [
-      "@cloudflare/workers-types"
+      "@cloudflare/workers-types",
+      "node"
     ]
   },
+  "exclude": [
+    "**/*.test.ts"
+  ]
 }

@@ -1,4 +1,3 @@
-import type { ExportedHandlerScheduledHandler } from "@cloudflare/workers-types";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
@@ -6,7 +5,7 @@ import { cors } from "hono/cors";
 import { api } from "./routes/index";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import type { CloudflareBindings } from "./types/bindings";
-import { runInboxCleanup } from "./schedules/index";
+import { runInboxCleanup, runNip05Cleanup } from "./schedules/index";
 const openapi_documentation_route = "/openapi.json";
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>().doc(openapi_documentation_route, {
@@ -35,14 +34,18 @@ app
 
 export default {
   fetch: app.fetch,
-  scheduled: async (event: ScheduledEvent, env: CloudflareBindings, ctx: ExecutionContext) => {
+  scheduled: async (_event: ScheduledEvent, env: CloudflareBindings, ctx: ExecutionContext) => {
     ctx.waitUntil(
       runInboxCleanup(env).catch((error) => {
         console.error("❌ Inbox cleanup failed:", error);
       })
     );
+    ctx.waitUntil(
+      runNip05Cleanup(env).catch((error) => {
+        console.error("❌ NIP-05 cleanup failed:", error);
+      }),
+    );
   }
 }
 
 export type { CloudflareBindings } from "./types/bindings";
-

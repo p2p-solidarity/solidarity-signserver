@@ -10,6 +10,9 @@ export interface CloudflareBindings {
   RATE_LIMITER: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
+  REGISTER_RATE_LIMITER: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
 
   // Inbox database + crypto secrets
   INBOX_DB: D1Database;
@@ -24,4 +27,3 @@ export interface CloudflareBindings {
 }
 
 export type { CloudflareBindings as default };
-

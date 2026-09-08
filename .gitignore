@@ -148,7 +148,6 @@ build
 
 # Cloudflare
 .wrangler
-wrangler.jsonc
 
 # PassKit Certificates (SENSITIVE - DO NOT COMMIT)
 Certificates/*.p12
