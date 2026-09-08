@@ -43,7 +43,7 @@
 			// worker never touches).
 			"binding": "INBOX_DB",
 			"database_name": "solidarity_id",
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "08f6a10c-742f-41d2-8094-b91f7beed484",
 			"migrations_dir": "drizzle"
 		}
 	],
