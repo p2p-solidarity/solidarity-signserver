@@ -1,12 +1,17 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	// The NIP-05 directory (`name@solidarity.gg`) as its own Worker. The
-	// solidarity.gg zone lives in THIS account (the one that also hosts the
+	// The NIP-05 directory (`name@creds.id`) as its own Worker. The creds.id
+	// and solidarity.gg zones live in THIS account (the one that also hosts the
 	// solidarity-app / landing Pages projects), not in the account that runs
 	// the inbox / PassKit worker (`wrangler.jsonc`), and a Worker route can only
 	// be attached from the zone's own account. Deploy with
 	// `bun run deploy:nip05` (scripts/deploy-nip05.sh): it creates the D1 on
 	// first run, fills `database_id` below, applies `drizzle/` and deploys.
+	//
+	// creds.id is the product domain (share links are `creds.id/@name`), so the
+	// identifier is `name@creds.id` — the directory answers on the same host the
+	// viewer lives on (Pages); these Worker routes take precedence for exactly
+	// the directory paths and nothing else.
 	"name": "solidarity-id",
 	"main": "src/nip05-worker.ts",
 	"account_id": "b9e60d05860dfe2eaf2db7f9930875c0",
@@ -22,17 +27,17 @@
 	},
 	"routes": [
 		{
-			"pattern": "solidarity.gg/.well-known/nostr.json*",
-			"zone_name": "solidarity.gg"
+			"pattern": "creds.id/.well-known/nostr.json*",
+			"zone_name": "creds.id"
 		},
 		// The wildcard route starts at /id/; DELETE /id needs its own exact route.
 		{
-			"pattern": "solidarity.gg/id",
-			"zone_name": "solidarity.gg"
+			"pattern": "creds.id/id",
+			"zone_name": "creds.id"
 		},
 		{
-			"pattern": "solidarity.gg/id/*",
-			"zone_name": "solidarity.gg"
+			"pattern": "creds.id/id/*",
+			"zone_name": "creds.id"
 		}
 	],
 	"d1_databases": [

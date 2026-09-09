@@ -1,5 +1,7 @@
 # NIP-05 目錄服務 — 設計文件(SSOT)
 
+> **2026-09-09 勘誤**:識別字網域改為產品網域 **`creds.id`**(`<name>@creds.id`,目錄掛在 `https://creds.id/.well-known/nostr.json` 與 `/id/*`),與分享連結 `creds.id/@<name>` 同一個 host。本文以下所有 `solidarity.gg` / `app.solidarity.gg` 一律讀作 `creds.id`;機制不變。部署方式見 README「NIP-05 directory」一節(獨立 worker `solidarity-id`,`bun run deploy:nip05`)。
+
 > 2026-08-13 · 以新版 v2 產品規格為主:本 backend 提供 **opt-in NIP-05 目錄**,連結人類可讀 ID(`<name>@solidarity.gg`)與 Nostr pubkey,並支撐真正的短網址 `https://app.solidarity.gg/@<name>`。
 > 對應 app repo 規格:`airmeishi/docs/ref/01-spec-verified-page.md` §8(HandleResolver 已預留 NIP-05 lane)。
 

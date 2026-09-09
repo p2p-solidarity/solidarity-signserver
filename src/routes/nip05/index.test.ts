@@ -162,7 +162,7 @@ async function fetchRoute(request: Request) {
 describe("NIP-05 endpoints", () => {
   test("registers, resolves, reports availability, and releases a handle", async () => {
     const availabilityBefore = await fetchRoute(
-      new Request("https://solidarity.gg/id/availability?name=AliceX"),
+      new Request("https://creds.id/id/availability?name=AliceX"),
     );
     expect(availabilityBefore.status).toBe(200);
     expect(availabilityBefore.headers.get("cache-control")).toBe("no-store");
@@ -173,7 +173,7 @@ describe("NIP-05 endpoints", () => {
 
     const body =
       '{"name":"AliceX","relays":["wss://relay.primal.net"],"consent":true}';
-    const registerUrl = "https://solidarity.gg/id/register";
+    const registerUrl = "https://creds.id/id/register";
     const registered = await fetchRoute(
       new Request(registerUrl, {
         method: "POST",
@@ -188,12 +188,12 @@ describe("NIP-05 endpoints", () => {
     expect(await registered.json()).toEqual({
       name: "alicex",
       pubkey: PUBKEY,
-      identifier: "alicex@solidarity.gg",
+      identifier: "alicex@creds.id",
     });
 
     const resolved = await fetchRoute(
       new Request(
-        "https://solidarity.gg/.well-known/nostr.json?name=ALICEX",
+        "https://creds.id/.well-known/nostr.json?name=ALICEX",
       ),
     );
     expect(resolved.status).toBe(200);
@@ -207,7 +207,7 @@ describe("NIP-05 endpoints", () => {
     });
 
     const availabilityAfter = await fetchRoute(
-      new Request("https://solidarity.gg/id/availability?name=alicex"),
+      new Request("https://creds.id/id/availability?name=alicex"),
     );
     expect(await availabilityAfter.json()).toEqual({
       name: "alicex",
@@ -216,7 +216,7 @@ describe("NIP-05 endpoints", () => {
     });
 
     currentTime += 1;
-    const deleteUrl = "https://solidarity.gg/id";
+    const deleteUrl = "https://creds.id/id";
     const released = await fetchRoute(
       new Request(deleteUrl, {
         method: "DELETE",
@@ -230,13 +230,13 @@ describe("NIP-05 endpoints", () => {
 
     const resolvedAfterRelease = await fetchRoute(
       new Request(
-        "https://solidarity.gg/.well-known/nostr.json?name=alicex",
+        "https://creds.id/.well-known/nostr.json?name=alicex",
       ),
     );
     expect(await resolvedAfterRelease.json()).toEqual({ names: {} });
 
     const availabilityReleased = await fetchRoute(
-      new Request("https://solidarity.gg/id/availability?name=alicex"),
+      new Request("https://creds.id/id/availability?name=alicex"),
     );
     expect(await availabilityReleased.json()).toEqual({
       name: "alicex",
@@ -247,7 +247,7 @@ describe("NIP-05 endpoints", () => {
     // G5 read side: the marker survives release, because someone holding an
     // older printed card is exactly who needs to see it.
     const history = await fetchRoute(
-      new Request("https://solidarity.gg/id/history?name=alicex"),
+      new Request("https://creds.id/id/history?name=alicex"),
     );
     expect(history.status).toBe(200);
     expect(history.headers.get("cache-control")).toBe("no-store");
@@ -263,14 +263,14 @@ describe("NIP-05 endpoints", () => {
 
   test("reports no history for a name that was never registered", async () => {
     const response = await fetchRoute(
-      new Request("https://solidarity.gg/id/history?name=nobody0"),
+      new Request("https://creds.id/id/history?name=nobody0"),
     );
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: "name_not_found" });
   });
 
   test("exposes a live rename redirect and its 90-day retry boundary", async () => {
-    const registerUrl = "https://solidarity.gg/id/register";
+    const registerUrl = "https://creds.id/id/register";
     const register = async (name: string): Promise<Response> => {
       const body = JSON.stringify({ name, consent: true });
       return fetchRoute(
@@ -291,7 +291,7 @@ describe("NIP-05 endpoints", () => {
 
     const redirectUntil = currentTime + 90 * 24 * 60 * 60;
     const history = await fetchRoute(
-      new Request("https://solidarity.gg/id/history?name=alice1"),
+      new Request("https://creds.id/id/history?name=alice1"),
     );
     expect(await history.json()).toMatchObject({
       status: "redirected",
@@ -309,7 +309,7 @@ describe("NIP-05 endpoints", () => {
   });
 
   test("refuses recovery without evidence instead of falling back to a human", async () => {
-    const url = "https://solidarity.gg/id/recover";
+    const url = "https://creds.id/id/recover";
     const body = JSON.stringify({
       name: "alicex",
       oldRecordJws: "not.a.jws",

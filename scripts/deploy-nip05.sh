@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Deploy the NIP-05 directory worker (`solidarity-id`) into the Cloudflare
-# account that owns the solidarity.gg zone. Idempotent:
+# account that owns the creds.id zone. Idempotent:
 #   1. find or create the D1 database `solidarity_id` in that account,
 #   2. write its id into wrangler.nip05.jsonc (commit that afterwards),
 #   3. apply the `drizzle/` migrations to it,
-#   4. deploy the worker onto the solidarity.gg routes,
+#   4. deploy the worker onto the creds.id routes (read from the config),
 #   5. probe the three public endpoints.
 # Needs a `wrangler login` session with access to that account.
 #
@@ -64,10 +64,13 @@ echo "▸ deploying solidarity-id"
 w deploy --minify
 
 # 5. Smoke test — every answer must be JSON from the directory, never the
-#    landing page's 404 HTML.
-echo "▸ probing solidarity.gg"
-for path in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/history?name=probe'; do
-  printf '  %-40s ' "$path"
-  curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://solidarity.gg${path}"
+#    viewer's SPA HTML. The host is the first route's host in the config.
+#    Routes propagate a few seconds after a deploy; an HTML answer right away
+#    is lag, re-probe before reading it as a failure.
+host="$(grep -oE '"pattern":[[:space:]]*"[^/"]+' "$CONFIG" | head -1 | grep -oE '[^"]+$')"
+echo "▸ probing ${host}"
+for ep in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/history?name=probe'; do
+  printf '  %-40s ' "$ep"
+  curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${host}${ep}"
 done
 echo "▸ done — commit ${CONFIG} if the database id changed"

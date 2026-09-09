@@ -1,4 +1,4 @@
-export const NIP05_DOMAIN = "solidarity.gg";
+export const NIP05_DOMAIN = "creds.id";
 
 /**
  * Name syntax (design §4 / G1). Two deliberate restrictions:
