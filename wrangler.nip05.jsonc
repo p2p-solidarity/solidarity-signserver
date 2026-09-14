@@ -38,6 +38,10 @@
 		{
 			"pattern": "creds.id/id/*",
 			"zone_name": "creds.id"
+		},
+		{
+			"pattern": "creds.id/vault/root/*",
+			"zone_name": "creds.id"
 		}
 	],
 	"d1_databases": [

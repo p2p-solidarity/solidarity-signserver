@@ -22,7 +22,8 @@ export async function rateLimitMiddleware(
   if (!success) {
     return c.json(
       { error: "Too many requests. Please try again later." },
-      429
+      429,
+      { "cache-control": "no-store", pragma: "no-cache" },
     );
   }
 

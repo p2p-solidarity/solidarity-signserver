@@ -15,6 +15,17 @@ export const inbox = sqliteTable("inbox", {
   createdAt: integer("created_at", { mode: "number" }).notNull(),
 });
 
+export const rootVaults = sqliteTable(
+  "root_vaults",
+  {
+    locator: text("locator").primaryKey(),
+    version: integer("version", { mode: "number" }).notNull(),
+    ciphertext: text("ciphertext").notNull(),
+    createdAt: integer("created_at", { mode: "number" }).notNull(),
+  },
+  (table) => [check("root_vaults_version_check", sql`${table.version} = 1`)],
+);
+
 export const nip05Handles = sqliteTable(
   "nip05_handles",
   {
@@ -103,12 +114,15 @@ export const nip05Audit = sqliteTable(
 
 export const schema = {
   inbox,
+  rootVaults,
   nip05Handles,
   nip05Audit,
 };
 
 export type InboxRecord = typeof inbox.$inferSelect;
 export type NewInboxRecord = typeof inbox.$inferInsert;
+export type RootVaultRecord = typeof rootVaults.$inferSelect;
+export type NewRootVaultRecord = typeof rootVaults.$inferInsert;
 export type Nip05HandleRecord = typeof nip05Handles.$inferSelect;
 export type NewNip05HandleRecord = typeof nip05Handles.$inferInsert;
 export type Nip05AuditRecord = typeof nip05Audit.$inferSelect;
