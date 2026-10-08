@@ -5,7 +5,7 @@ import type { CloudflareBindings } from "../types/bindings";
 // deleting one would quietly free the name for a stranger to take.
 export async function runNip05Cleanup(env: CloudflareBindings) {
   const removed = await purgeExpiredNip05Data(
-    env.INBOX_DB,
+    env.ID_DB,
     Math.floor(Date.now() / 1000),
   );
   console.log(`🧹 Purged ${removed.audits} expired NIP-05 audit entries`);

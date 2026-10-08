@@ -1,19 +1,19 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	// The NIP-05 directory (`name@creds.id`) as its own Worker. The creds.id
-	// and solidarity.gg zones live in THIS account (the one that also hosts the
-	// solidarity-app / landing Pages projects), not in the account that runs
-	// the inbox worker (`wrangler.jsonc`), and a Worker route can only
-	// be attached from the zone's own account. Deploy with
-	// `bun run deploy:nip05` (scripts/deploy-nip05.sh): it creates the D1 on
-	// first run, fills `database_id` below, applies `drizzle/` and deploys.
+	// The creds.id ID backend: the NIP-05 directory (`name@creds.id`) and the
+	// passkey root vault. It lives in the account that owns the creds.id and
+	// solidarity.gg zones (the one that also hosts the solidarity-app / landing
+	// Pages projects), because a Worker route can only be attached from the
+	// zone's own account. Deploy with `bun run deploy` (scripts/deploy.sh): it
+	// creates the D1 on first run, fills `database_id` below, applies
+	// `drizzle/` and deploys.
 	//
 	// creds.id is the product domain (share links are `creds.id/@name`), so the
 	// identifier is `name@creds.id` — the directory answers on the same host the
 	// viewer lives on (Pages); these Worker routes take precedence for exactly
 	// the directory paths and nothing else.
 	"name": "solidarity-id",
-	"main": "src/nip05-worker.ts",
+	"main": "src/index.ts",
 	"account_id": "b9e60d05860dfe2eaf2db7f9930875c0",
 	"compatibility_date": "2025-09-13",
 	"compatibility_flags": [
@@ -46,11 +46,10 @@
 	],
 	"d1_databases": [
 		{
-			// Binding name is what the shared repository code reads; the database
-			// itself is the directory's own (only `nip05_*` tables are used —
-			// `drizzle/0000_inbox.sql` also creates an inbox table here that this
-			// worker never touches).
-			"binding": "INBOX_DB",
+			// NIP-05 handles + audit and root vaults. `drizzle/0000_inbox.sql` is
+			// kept only because migrations are append-only; `0003_drop_inbox.sql`
+			// removes that table again.
+			"binding": "ID_DB",
 			"database_name": "solidarity_id",
 			"database_id": "08f6a10c-742f-41d2-8094-b91f7beed484",
 			"migrations_dir": "drizzle"

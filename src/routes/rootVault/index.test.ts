@@ -50,7 +50,7 @@ beforeEach(() => {
     );
   `);
   env = {
-    INBOX_DB: new TestD1Database(sqlite) as unknown as D1Database,
+    ID_DB: new TestD1Database(sqlite) as unknown as D1Database,
   } as CloudflareBindings;
 });
 

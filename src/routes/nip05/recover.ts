@@ -97,7 +97,7 @@ export const recoverHandler = async (
   }
 
   try {
-    const current = await findActiveDirectoryEntry(c.env.INBOX_DB, body.name);
+    const current = await findActiveDirectoryEntry(c.env.ID_DB, body.name);
     if (current === null) {
       return c.json({ error: "name_not_found" }, 404);
     }
@@ -117,7 +117,7 @@ export const recoverHandler = async (
       return c.json({ error: "recovery_denied", detail: verdict.detail }, 403);
     }
 
-    const result = await recoverHandle(c.env.INBOX_DB, {
+    const result = await recoverHandle(c.env.ID_DB, {
       name: body.name,
       expectedPubkey: current.pubkey,
       pubkey: auth.event.pubkey,

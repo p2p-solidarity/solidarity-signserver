@@ -92,7 +92,7 @@ beforeEach(async () => {
     value: { default: new MemoryCache() },
   });
   env = {
-    INBOX_DB: new TestD1Database(sqlite) as unknown as D1Database,
+    ID_DB: new TestD1Database(sqlite) as unknown as D1Database,
     REGISTER_RATE_LIMITER: {
       limit: async () => ({ success: true }),
     },

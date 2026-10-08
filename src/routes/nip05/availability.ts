@@ -59,7 +59,7 @@ export const availabilityHandler = async (c: Context<{ Bindings: CloudflareBindi
   }
 
   try {
-    const state = await getStoredNameState(c.env.INBOX_DB, validation.name);
+    const state = await getStoredNameState(c.env.ID_DB, validation.name);
     if (state.state === "available") {
       return c.json(
         { name: validation.name, available: true },

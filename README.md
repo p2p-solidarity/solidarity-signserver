@@ -1,38 +1,64 @@
-```txt
-npm install
-npm run dev
+# solidarity-id
+
+The creds.id ID backend: one Cloudflare Worker (`solidarity-id`) with one D1
+database (`solidarity_id`). It stores two things and nothing else:
+
+- **NIP-05 directory** — `name@creds.id` handles bound to Nostr pubkeys.
+- **Root vault** — the passkey-encrypted root identity record that lets the
+  web builder unlock the same identity as the app. The server only ever sees
+  ciphertext.
+
+The Worker sits on creds.id routes in front of the creds.id Pages viewer and
+answers only the paths below.
+
+## Endpoints
+
+| Method | Path | What it does |
+|---|---|---|
+| `GET` | `/.well-known/nostr.json?name=` | NIP-05 lookup |
+| `GET` | `/id/availability?name=` | Is a name free to register |
+| `POST` | `/id/register` | Register a name (NIP-98 signed) |
+| `DELETE` | `/id` | Release your name (NIP-98 signed) |
+| `POST` | `/id/recover` | Rebind a name to a new key with cryptographic evidence |
+| `GET` | `/id/history?name=` | Rebind history for a name |
+| `PUT` | `/vault/root/:locator` | Store a root vault record (write-once) |
+| `GET` | `/vault/root/:locator` | Fetch a root vault record |
+
+The NIP-05 design is `docs/design-nip05.md` (written when the domain was still
+solidarity.gg — read it as creds.id).
+
+## Layout
+
+- `src/index.ts` — Worker entry: CORS, rate limit, routers, hourly cron that
+  purges expired NIP-05 audit rows (handle rows are permanent tombstones).
+- `src/routes/nip05`, `src/lib/nip05` — directory routes and logic.
+- `src/routes/rootVault` — root vault routes.
+- `drizzle/*.sql` — D1 migrations, applied by wrangler. `src/db/schema.ts`
+  mirrors them as typed tables.
+- `wrangler.jsonc` — Worker config (account, routes, D1, rate limiters, cron).
+
+## Develop
+
+```sh
+bun install
+bun run dev        # wrangler dev
+bun run typecheck
+bun test
 ```
 
-```txt
-npm run deploy
+## Deploy
+
+```sh
+bun run deploy
 ```
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+Needs a `wrangler login` with access to the account that owns the creds.id
+zone. `scripts/deploy.sh` finds or creates the D1, writes its id into
+`wrangler.jsonc`, applies `drizzle/`, deploys, and probes the public NIP-05
+endpoints. Commit `wrangler.jsonc` if the database id changed.
 
-```txt
-npm run cf-typegen
-```
+## Consumers
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
-
-## Minimal inbox API
-
-- D1 schema lives in `drizzle/0000_inbox.sql` and `src/db/schema.ts`. Apply it with `wrangler d1 migrations apply` after wiring the `INBOX_DB` binding.
-- The worker exposes `/seal`, `/send`, `/sync`, and `/ack` under `src/routes/inbox`.
-- Secrets required by the worker:
-  - `PUSH_SECRET`: AES-256 key used to seal/unseal device tokens (base64, hex, or raw string).
-  - `APPLE_P8_KEY`: Base64-encoded or plain PKCS#8 `.p8` contents.
-  - `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APNS_TOPIC`, optional `APNS_HOST`.
-- Configure the cron trigger in `wrangler.jsonc` to keep the inbox table clean (24h TTL).
-
-## NIP-05 directory (`name@creds.id`)
-
-- Routes on the product domain: `GET https://creds.id/.well-known/nostr.json?name=`, `GET /id/availability`, `POST /id/register`, `DELETE /id`, `POST /id/recover`, `GET /id/history` under `src/routes/nip05`; design in `docs/design-nip05.md` (written when the domain was still solidarity.gg — read it as creds.id).
-- It ships as its **own Worker** (`solidarity-id`, entry `src/nip05-worker.ts`, config `wrangler.nip05.jsonc`) because the creds.id / solidarity.gg zones live in a different Cloudflare account than the inbox worker, and a Worker route can only be attached from the zone's own account. It has its own D1 (`solidarity_id`) there. The Worker routes sit in front of the creds.id Pages viewer for exactly the directory paths.
-- Deploy: `bun run deploy:nip05` (needs a `wrangler login` with access to that account). The script finds or creates the D1, writes its id into `wrangler.nip05.jsonc`, applies `drizzle/`, deploys, and probes the three public endpoints — commit the config if the id changed.
-- Consumers: the app (`apps/expo/src/nip05/client.ts`) and `@solidarity/shared`'s `Nip05HandleResolver` (used by both app and web for `creds.id/@name`).
+- App and web: `@solidarity/shared` — `nip05/client.ts` (availability,
+  register) and `Nip05HandleResolver` (resolves `creds.id/@name`).
+- App: `apps/expo/src/identity/rootVaultSync.ts` (root vault).

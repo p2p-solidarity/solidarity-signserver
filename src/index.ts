@@ -7,14 +7,13 @@ import { runNip05Cleanup } from "./schedules/index";
 import type { CloudflareBindings } from "./types/bindings";
 
 /**
- * NIP-05 directory worker — the `creds.id` id service on its own.
+ * solidarity-id — the `creds.id` ID backend.
  *
- * Deployed with `wrangler.nip05.jsonc` into the Cloudflare account that owns
- * the creds.id zone (a Worker route can only be attached from the
- * account the zone lives in), separate from the inbox worker in
- * `src/index.ts`, which stays in its own account with its own D1. Same
- * handlers, same schema (`drizzle/`), only the nip05 router and its audit
- * cleanup cron are mounted. `bun run deploy:nip05` does the whole thing.
+ * Serves the NIP-05 directory (`name@creds.id`, `/.well-known/nostr.json`,
+ * `/id/*`) and the passkey root vault (`/vault/root/*`) on creds.id routes in
+ * front of the Pages viewer, backed by the `solidarity_id` D1. The hourly
+ * cron purges expired NIP-05 audit rows. `bun run deploy` does the whole
+ * thing (scripts/deploy.sh).
  */
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>();
 

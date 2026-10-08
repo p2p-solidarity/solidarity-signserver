@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "airmeishi-backend",
+      "name": "solidarity-id",
       "dependencies": {
         "@hono/zod-openapi": "^1.1.0",
         "@noble/curves": "^2.2.0",

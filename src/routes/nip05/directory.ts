@@ -54,7 +54,7 @@ export const directoryHandler = async (c: Context<{ Bindings: CloudflareBindings
   }
 
   try {
-    const entry = await findActiveDirectoryEntry(c.env.INBOX_DB, name);
+    const entry = await findActiveDirectoryEntry(c.env.ID_DB, name);
     const body =
       entry === null
         ? { names: {} }

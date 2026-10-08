@@ -10,7 +10,7 @@ export interface CloudflareBindings {
   };
 
   // NIP-05 directory + root vault database
-  INBOX_DB: D1Database;
+  ID_DB: D1Database;
 }
 
 export type { CloudflareBindings as default };
