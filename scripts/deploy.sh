@@ -5,7 +5,7 @@
 #   2. write its id into wrangler.jsonc (commit that afterwards),
 #   3. apply the `drizzle/` migrations to it,
 #   4. deploy the worker onto the creds.id routes (read from the config),
-#   5. probe the three public endpoints.
+#   5. probe the three public endpoints and the app association files.
 # Needs a `wrangler login` session with access to that account.
 #
 # Every wrangler call carries `-c wrangler.jsonc` so the account always comes
@@ -71,4 +71,14 @@ for ep in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/hi
   printf '  %-40s ' "$ep"
   curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${host}${ep}"
 done
+# App association files, on every host the config routes them for. Each must
+# be 200 application/json (assetlinks.json is 404 until
+# ANDROID_SHA256_CERT_FINGERPRINTS is set).
+echo "▸ probing association files"
+grep -oE '"pattern":[[:space:]]*"[^"]+' "$CONFIG" | grep -oE '[^"]+$' \
+  | grep -E 'apple-app-site-association|assetlinks\.json|client-metadata\.json' | sed 's/\*$//' \
+  | while read -r target; do
+      printf '  %-62s ' "$target"
+      curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${target}"
+    done
 echo "▸ done — commit ${CONFIG} if the database id changed"

@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import { nip05Router } from "./routes/nip05";
 import { rootVaultRouter } from "./routes/rootVault";
+import { wellKnownRouter } from "./routes/wellKnown";
 import { runNip05Cleanup } from "./schedules/index";
 import type { CloudflareBindings } from "./types/bindings";
 
@@ -27,6 +28,9 @@ app
       maxAge: 600,
     }),
   )
+  // Static association documents answer before the rate limiter: Apple's
+  // CDN and Google's verifier fetch them from shared IPs.
+  .route("/", wellKnownRouter)
   .use("*", rateLimitMiddleware)
   .route("/", rootVaultRouter)
   .route("/", nip05Router);

@@ -11,6 +11,9 @@ export interface CloudflareBindings {
 
   // NIP-05 directory + root vault database
   ID_DB: D1Database;
+
+  // SHA-256 signing-certificate fingerprints for assetlinks.json
+  ANDROID_SHA256_CERT_FINGERPRINTS?: string;
 }
 
 export type { CloudflareBindings as default };
