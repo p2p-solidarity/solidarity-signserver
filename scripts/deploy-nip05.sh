@@ -11,7 +11,7 @@
 # Every wrangler call carries `-c wrangler.nip05.jsonc`: wrangler takes the
 # account from the config file it is given (CLOUDFLARE_ACCOUNT_ID alone does
 # NOT redirect `d1` commands away from the default wrangler.jsonc), and the
-# inbox / PassKit worker's config points at a different account.
+# inbox worker's config points at a different account.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

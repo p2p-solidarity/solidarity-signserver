@@ -12,8 +12,8 @@ const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>().doc(openapi_docu
   openapi: "3.1.0",
   info: {
     version: "1.0.0",
-    title: "PassKit Signing API",
-    description: "Serverless Apple Wallet Pass signing service using PKCS#7",
+    title: "Solidarity inbox API",
+    description: "Sealed inbox relay and NIP-05 directory",
   },
 });
 

@@ -11,7 +11,7 @@ import type { CloudflareBindings } from "./types/bindings";
  *
  * Deployed with `wrangler.nip05.jsonc` into the Cloudflare account that owns
  * the creds.id zone (a Worker route can only be attached from the
- * account the zone lives in), separate from the inbox / PassKit worker in
+ * account the zone lives in), separate from the inbox worker in
  * `src/index.ts`, which stays in its own account with its own D1. Same
  * handlers, same schema (`drizzle/`), only the nip05 router and its audit
  * cleanup cron are mounted. `bun run deploy:nip05` does the whole thing.

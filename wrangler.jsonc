@@ -11,7 +11,7 @@
 		"enabled": true,
 		"head_sampling_rate": 1
 	},
-	// This worker (inbox / PassKit) is reached on its workers.dev hostname — the
+	// This worker (inbox) is reached on its workers.dev hostname — the
 	// app's EXPO_PUBLIC_SAKURA_API_URL. Kept explicit so a deploy never silently
 	// flips it (wrangler defaults it to false when unset). The NIP-05 directory
 	// routes on solidarity.gg live in `wrangler.nip05.jsonc`: that zone belongs

@@ -1,11 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 
 export interface CloudflareBindings {
-  // PassKit certificate secrets (base64 encoded PEM files)
-  PASS_CERT: string;
-  PASS_KEY: string;
-  WWDR_CERT: string;
-
   // Rate limiter binding
   RATE_LIMITER: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;

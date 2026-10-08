@@ -3,7 +3,7 @@
 	// The NIP-05 directory (`name@creds.id`) as its own Worker. The creds.id
 	// and solidarity.gg zones live in THIS account (the one that also hosts the
 	// solidarity-app / landing Pages projects), not in the account that runs
-	// the inbox / PassKit worker (`wrangler.jsonc`), and a Worker route can only
+	// the inbox worker (`wrangler.jsonc`), and a Worker route can only
 	// be attached from the zone's own account. Deploy with
 	// `bun run deploy:nip05` (scripts/deploy-nip05.sh): it creates the D1 on
 	// first run, fills `database_id` below, applies `drizzle/` and deploys.
