@@ -99,7 +99,7 @@ export const rootVaultRouter = new Hono<{ Bindings: CloudflareBindings }>()
     }
 
     const createdAt = Math.floor(Date.now() / 1_000);
-    const insert = await c.env.INBOX_DB.prepare(
+    const insert = await c.env.ID_DB.prepare(
       `INSERT OR IGNORE INTO root_vaults (locator, version, ciphertext, created_at)
        VALUES (?, ?, ?, ?)`,
     )
@@ -110,7 +110,7 @@ export const rootVaultRouter = new Hono<{ Bindings: CloudflareBindings }>()
       return c.json(body, 201, noStoreHeaders());
     }
 
-    const existing = await c.env.INBOX_DB.prepare(
+    const existing = await c.env.ID_DB.prepare(
       "SELECT version, ciphertext FROM root_vaults WHERE locator = ?",
     )
       .bind(locator)
@@ -126,7 +126,7 @@ export const rootVaultRouter = new Hono<{ Bindings: CloudflareBindings }>()
       return c.json({ error: "invalid_locator" }, 400, noStoreHeaders());
     }
 
-    const row = await c.env.INBOX_DB.prepare(
+    const row = await c.env.ID_DB.prepare(
       "SELECT version, ciphertext FROM root_vaults WHERE locator = ?",
     )
       .bind(locator)

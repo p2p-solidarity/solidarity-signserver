@@ -109,7 +109,7 @@ export const registerHandler = async (c: Context<{ Bindings: CloudflareBindings 
   }
 
   try {
-    const result = await registerHandle(c.env.INBOX_DB, {
+    const result = await registerHandle(c.env.ID_DB, {
       name: body.name,
       pubkey: auth.event.pubkey,
       relays: body.relays,

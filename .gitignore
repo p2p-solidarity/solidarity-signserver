@@ -149,11 +149,7 @@ build
 # Cloudflare
 .wrangler
 
-# PassKit Certificates (SENSITIVE - DO NOT COMMIT)
-Certificates/*.p12
-Certificates/*.pem
-Certificates/*.cer
-Certificates/*.key
+# Key material (SENSITIVE - DO NOT COMMIT)
 *.p12
 *.pem
 *.key

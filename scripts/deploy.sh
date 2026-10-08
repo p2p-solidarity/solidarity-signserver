@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
-# Deploy the NIP-05 directory worker (`solidarity-id`) into the Cloudflare
-# account that owns the creds.id zone. Idempotent:
+# Deploy the ID backend worker (`solidarity-id`) into the Cloudflare account
+# that owns the creds.id zone. Idempotent:
 #   1. find or create the D1 database `solidarity_id` in that account,
-#   2. write its id into wrangler.nip05.jsonc (commit that afterwards),
+#   2. write its id into wrangler.jsonc (commit that afterwards),
 #   3. apply the `drizzle/` migrations to it,
 #   4. deploy the worker onto the creds.id routes (read from the config),
-#   5. probe the three public endpoints.
+#   5. probe the three public endpoints and the app association files.
 # Needs a `wrangler login` session with access to that account.
 #
-# Every wrangler call carries `-c wrangler.nip05.jsonc`: wrangler takes the
-# account from the config file it is given (CLOUDFLARE_ACCOUNT_ID alone does
-# NOT redirect `d1` commands away from the default wrangler.jsonc), and the
-# inbox / PassKit worker's config points at a different account.
+# Every wrangler call carries `-c wrangler.jsonc` so the account always comes
+# from that file, whatever directory or default config wrangler would pick.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-CONFIG="wrangler.nip05.jsonc"
+CONFIG="wrangler.jsonc"
 DB_NAME="solidarity_id"
 UUID_RE='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
@@ -28,7 +26,7 @@ account="$(grep -oE '"account_id":[[:space:]]*"[0-9a-f]{32}"' "$CONFIG" | grep -
 echo "▸ account ${account} (from ${CONFIG})"
 
 # 1. D1 — reuse if it exists, otherwise create it. The list is fetched with
-#    the nip05 config so it is THAT account's list.
+#    the config so it is THAT account's list.
 db_id="$(w d1 list --json 2>/dev/null \
   | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const rows=JSON.parse(s);const hit=rows.find(r=>r.name===process.argv[1]);process.stdout.write(hit?hit.uuid:"")})' "$DB_NAME" \
   || true)"
@@ -73,4 +71,14 @@ for ep in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/hi
   printf '  %-40s ' "$ep"
   curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${host}${ep}"
 done
+# App association files, on every host the config routes them for. Each must
+# be 200 application/json (assetlinks.json is 404 until
+# ANDROID_SHA256_CERT_FINGERPRINTS is set).
+echo "▸ probing association files"
+grep -oE '"pattern":[[:space:]]*"[^"]+' "$CONFIG" | grep -oE '[^"]+$' \
+  | grep -E 'apple-app-site-association|assetlinks\.json|client-metadata\.json' | sed 's/\*$//' \
+  | while read -r target; do
+      printf '  %-62s ' "$target"
+      curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${target}"
+    done
 echo "▸ done — commit ${CONFIG} if the database id changed"

@@ -52,7 +52,7 @@ export const historyHandler = async (
   }
 
   try {
-    const info = await getHandleRebindInfo(c.env.INBOX_DB, validation.name);
+    const info = await getHandleRebindInfo(c.env.ID_DB, validation.name);
     if (info === null) {
       return c.json({ error: "name_not_found" }, 404, responseHeaders);
     }

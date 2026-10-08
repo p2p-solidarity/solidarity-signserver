@@ -51,7 +51,7 @@ export const releaseHandler = async (c: Context<{ Bindings: CloudflareBindings }
   }
 
   try {
-    const result = await releaseHandle(c.env.INBOX_DB, {
+    const result = await releaseHandle(c.env.ID_DB, {
       pubkey: auth.event.pubkey,
       eventId: auth.event.id,
       authEvent: auth.authEvent,
