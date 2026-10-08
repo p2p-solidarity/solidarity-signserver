@@ -9,16 +9,8 @@ export interface CloudflareBindings {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
 
-  // Inbox database + crypto secrets
+  // NIP-05 directory + root vault database
   INBOX_DB: D1Database;
-  PUSH_SECRET: string;
-
-  // APNs credentials
-  APPLE_P8_KEY: string;
-  APPLE_TEAM_ID: string;
-  APPLE_KEY_ID: string;
-  APNS_TOPIC: string;
-  APNS_HOST?: string;
 }
 
 export type { CloudflareBindings as default };

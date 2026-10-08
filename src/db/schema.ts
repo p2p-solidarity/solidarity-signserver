@@ -8,13 +8,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-export const inbox = sqliteTable("inbox", {
-  id: text("id").primaryKey(),
-  ownerPubkey: text("owner_pubkey").notNull(),
-  blob: text("blob").notNull(),
-  createdAt: integer("created_at", { mode: "number" }).notNull(),
-});
-
 export const rootVaults = sqliteTable(
   "root_vaults",
   {
@@ -113,14 +106,11 @@ export const nip05Audit = sqliteTable(
 );
 
 export const schema = {
-  inbox,
   rootVaults,
   nip05Handles,
   nip05Audit,
 };
 
-export type InboxRecord = typeof inbox.$inferSelect;
-export type NewInboxRecord = typeof inbox.$inferInsert;
 export type RootVaultRecord = typeof rootVaults.$inferSelect;
 export type NewRootVaultRecord = typeof rootVaults.$inferInsert;
 export type Nip05HandleRecord = typeof nip05Handles.$inferSelect;
