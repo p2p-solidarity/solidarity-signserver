@@ -24,6 +24,9 @@ export interface CloudflareBindings {
   APPLE_KEY_ID: string;
   APNS_TOPIC: string;
   APNS_HOST?: string;
+
+  // solidarity-id: SHA-256 signing-certificate fingerprints for assetlinks.json
+  ANDROID_SHA256_CERT_FINGERPRINTS?: string;
 }
 
 export type { CloudflareBindings as default };

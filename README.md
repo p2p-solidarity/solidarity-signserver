@@ -36,3 +36,10 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 - It ships as its **own Worker** (`solidarity-id`, entry `src/nip05-worker.ts`, config `wrangler.nip05.jsonc`) because the creds.id / solidarity.gg zones live in a different Cloudflare account than the inbox / PassKit worker, and a Worker route can only be attached from the zone's own account. It has its own D1 (`solidarity_id`) there. The Worker routes sit in front of the creds.id Pages viewer for exactly the directory paths.
 - Deploy: `bun run deploy:nip05` (needs a `wrangler login` with access to that account). The script finds or creates the D1, writes its id into `wrangler.nip05.jsonc`, applies `drizzle/`, deploys, and probes the three public endpoints — commit the config if the id changed.
 - Consumers: the app (`apps/expo/src/nip05/client.ts`) and `@solidarity/shared`'s `Nip05HandleResolver` (used by both app and web for `creds.id/@name`).
+
+## App association files (same `solidarity-id` worker)
+
+- `src/routes/wellKnown` serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on creds.id, solidarity.gg and app.solidarity.gg (the hosts the app claims in `app.json`), and the atproto OAuth `client_id` document at `https://solidarity.gg/oauth/client-metadata.json`. The viewer on those hosts is a Pages SPA that would otherwise answer these paths with `index.html`.
+- AASA: universal links for `/#…`, `/@*`, `/c/*`, `/pear/*`, `/websign#req=` and `webcredentials` for passkeys (RP ID creds.id). The OAuth metadata must stay identical to the app's `apps/expo/src/atproto/client-metadata.json`.
+- `assetlinks.json` needs `ANDROID_SHA256_CERT_FINGERPRINTS` in `wrangler.nip05.jsonc` (`vars`): the Play app-signing certificate SHA-256, plus the upload certificate for builds installed outside Play. Until it is set the endpoint answers 404.
+- These routes answer before the rate limiter.

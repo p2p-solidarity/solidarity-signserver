@@ -42,8 +42,48 @@
 		{
 			"pattern": "creds.id/vault/root/*",
 			"zone_name": "creds.id"
+		},
+		// App association files (src/routes/wellKnown) on every host the app
+		// claims in app.json — creds.id plus the pre-switch solidarity.gg hosts,
+		// whose zone is in this account too. Without these routes the Pages SPA
+		// answers with index.html and iOS/Android verification fails.
+		{
+			"pattern": "creds.id/.well-known/apple-app-site-association*",
+			"zone_name": "creds.id"
+		},
+		{
+			"pattern": "creds.id/.well-known/assetlinks.json*",
+			"zone_name": "creds.id"
+		},
+		{
+			"pattern": "solidarity.gg/.well-known/apple-app-site-association*",
+			"zone_name": "solidarity.gg"
+		},
+		{
+			"pattern": "solidarity.gg/.well-known/assetlinks.json*",
+			"zone_name": "solidarity.gg"
+		},
+		{
+			"pattern": "app.solidarity.gg/.well-known/apple-app-site-association*",
+			"zone_name": "solidarity.gg"
+		},
+		{
+			"pattern": "app.solidarity.gg/.well-known/assetlinks.json*",
+			"zone_name": "solidarity.gg"
+		},
+		// atproto OAuth client_id stays on solidarity.gg (the app's ATPROTO_CLIENT_ID).
+		{
+			"pattern": "solidarity.gg/oauth/client-metadata.json*",
+			"zone_name": "solidarity.gg"
 		}
 	],
+	"vars": {
+		// SHA-256 fingerprints (AA:BB:…, comma-separated) of every certificate
+		// that signs gg.solidarity.app: Play Console → App integrity → App signing
+		// key certificate, plus the upload key certificate for builds installed
+		// outside Play. Empty → /.well-known/assetlinks.json answers 404.
+		"ANDROID_SHA256_CERT_FINGERPRINTS": ""
+	},
 	"d1_databases": [
 		{
 			// Binding name is what the shared repository code reads; the database
