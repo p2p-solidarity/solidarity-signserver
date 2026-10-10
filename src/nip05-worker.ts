@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
+import { appLinksRouter } from "./routes/appLinks";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import { nip05Router } from "./routes/nip05";
 import { rootVaultRouter } from "./routes/rootVault";
@@ -29,6 +30,7 @@ app
     }),
   )
   .use("*", rateLimitMiddleware)
+  .route("/", appLinksRouter)
   .route("/", rootVaultRouter)
   .route("/", nip05Router);
 

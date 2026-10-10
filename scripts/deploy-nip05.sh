@@ -69,7 +69,7 @@ w deploy --minify
 #    is lag, re-probe before reading it as a failure.
 host="$(grep -oE '"pattern":[[:space:]]*"[^/"]+' "$CONFIG" | head -1 | grep -oE '[^"]+$')"
 echo "▸ probing ${host}"
-for ep in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/history?name=probe'; do
+for ep in '/.well-known/nostr.json?name=_' '/id/availability?name=probe' '/id/history?name=probe' '/.well-known/apple-app-site-association' '/.well-known/assetlinks.json'; do
   printf '  %-40s ' "$ep"
   curl -sS -m 20 -o /dev/null -w '%{http_code} %{content_type}\n' "https://${host}${ep}"
 done

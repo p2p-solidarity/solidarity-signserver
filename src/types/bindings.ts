@@ -24,6 +24,10 @@ export interface CloudflareBindings {
   APPLE_KEY_ID: string;
   APNS_TOPIC: string;
   APNS_HOST?: string;
+
+  // creds.id assetlinks.json: SHA-256 fingerprints of the Play app signing
+  // certificate, comma-separated (wrangler.nip05.jsonc `vars`)
+  ANDROID_CERT_SHA256?: string;
 }
 
 export type { CloudflareBindings as default };

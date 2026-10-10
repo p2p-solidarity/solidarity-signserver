@@ -42,8 +42,25 @@
 		{
 			"pattern": "creds.id/vault/root/*",
 			"zone_name": "creds.id"
+		},
+		// App-link association files (src/routes/appLinks): Apple and Google
+		// need JSON here, not the viewer's SPA HTML.
+		{
+			"pattern": "creds.id/.well-known/apple-app-site-association",
+			"zone_name": "creds.id"
+		},
+		{
+			"pattern": "creds.id/.well-known/assetlinks.json",
+			"zone_name": "creds.id"
 		}
 	],
+	"vars": {
+		// SHA-256 of the Play Console "App signing key certificate" (Setup →
+		// App signing), comma-separated if there are several. Empty means
+		// /.well-known/assetlinks.json answers 404 and Android App Links for
+		// creds.id stay unverified.
+		"ANDROID_CERT_SHA256": ""
+	},
 	"d1_databases": [
 		{
 			// Binding name is what the shared repository code reads; the database
